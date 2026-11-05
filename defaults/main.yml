@@ -1,0 +1,18 @@
+---
+cloud1_app_dir: /opt/cloud-1
+cloud1_data_dir: /var/lib/cloud-1
+cloud1_wordpress_data_dir: /var/lib/cloud-1/wordpress
+cloud1_mariadb_data_dir: /var/lib/cloud-1/mariadb
+
+cloud1_database_name: wordpress
+cloud1_database_user: wp_hidriouc
+
+cloud1_domain_name: hidriouc.42.fr
+cloud1_wordpress_title: Inception
+cloud1_wordpress_admin_name: wpa_hidriouc
+cloud1_wordpress_admin_email: hidriouc-admin@1337.com
+cloud1_wordpress_user_name: wpu-hidriouc
+cloud1_wordpress_user_email: hidriouc@1337.com
+cloud1_wordpress_user_role: subscriber
+
+cloud1_ftp_user_name: ftp_user12

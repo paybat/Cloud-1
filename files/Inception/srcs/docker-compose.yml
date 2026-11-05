@@ -1,0 +1,137 @@
+
+services:
+
+  nginx:
+    container_name: nginx
+    image: nginx:hidriouc
+    build:
+      context: ./requirements/nginx
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - wordpress:/var/www/wordpress
+    networks:
+      - inception
+    restart: always
+    depends_on:
+      wordpress:
+        condition: service_started
+    env_file:
+      - .env
+
+  mariadb:
+    image: mariadb:hidriouc
+    build:
+      context: ./requirements/mariadb
+      dockerfile: Dockerfile
+    container_name: mariadb
+    volumes:
+      - mariadb:/var/lib/mysql
+    networks:
+      - inception
+    env_file:
+      - .env
+    restart: always
+    healthcheck:
+      test: ["CMD","mysqladmin", "ping","--silent"]  
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  
+  wordpress:
+    container_name: wordpress
+    image: wordpress:hidriouc
+    build:
+      context: ./requirements/wordpress
+      dockerfile: Dockerfile
+    volumes:
+      - wordpress:/var/www/wordpress
+    networks:
+      - inception
+    restart: always
+    depends_on:
+      mariadb : 
+        condition: service_healthy
+    env_file:
+      - .env
+
+  redis:
+    container_name: redis
+    build: requirements/bonus/redis
+    image: redis:hidriouc
+    env_file: .env
+    volumes:
+      - wordpress:/var/www/wordpress
+    networks:
+      - inception
+    restart: always
+
+  # ftp:
+  #   container_name: ftp
+  #   build: requirements/bonus/ftp
+  #   image: ftp:hidriouc
+  #   env_file: .env
+  #   # ports:
+  #   #   - "21:21"
+  #   #   - "30000-30100:30000-30100"
+  #   volumes:
+  #     - wordpress:/data/uploads
+  #   networks:
+  #     - inception
+  #   restart: always
+
+  # adminer:
+  #   container_name: adminer
+  #   image: adminer:hidriouc
+  #   build: requirements/bonus/adminer
+  #   networks:
+  #     - inception
+  #   # ports:
+  #   #   - "9090:9090"
+  #   restart: always
+
+  # mailhog:
+  #   container_name: mailhog
+  #   image: mailhog:hidriouc
+  #   build: requirements/bonus/mailhog
+  #   # ports:
+  #   #   - "1025:1025"
+  #   #   - "8025:8025"
+  #   networks:
+  #     - inception
+  #   restart: always
+
+  # static:
+  #   container_name: static
+  #   image: static:hidriouc
+  #   build: requirements/bonus/static
+  #   # ports:
+  #   #   - "8080:8080"
+  #   networks:
+  #     - inception
+  #   restart: always
+
+volumes:
+  wordpress:
+    name: wordpress
+    driver: local
+    driver_opts:
+      type: none
+      device: ${WORDPRESSVOLUMEPATH}
+      o: bind
+
+  mariadb:
+    name: mariadb
+    driver: local
+    driver_opts:
+      type: none
+      device: ${MARIADBVOLUMEPATH}
+      o: bind
+
+
+networks:
+  inception:
+    name: inception

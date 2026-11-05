@@ -1,0 +1,3 @@
+smtp_bind_addr: 0.0.0.0:1025
+http_bind_addr: 0.0.0.0:8025
+
