@@ -1,0 +1,50 @@
+---
+
+- name: Update APT package cache
+  ansible.builtin.apt:
+    update_cache: yes
+    cache_valid_time: 3600
+    
+- name: Install Docker, Compose, Buildx, and firewall
+  ansible.builtin.apt:
+    name:
+      - docker.io
+      - docker-compose-v2
+      - docker-buildx
+      - ufw
+    state: present
+
+- name: Allow SSH before enabling firewall
+  community.general.ufw:
+    rule: allow
+    port: '22'
+    proto: tcp
+  when: cloud1_enable_firewall | bool
+
+- name: Allow web traffic through firewall
+  community.general.ufw:
+    rule: allow
+    port: '{{ item }}'
+    proto: tcp
+  loop:
+    - '80'
+    - '443'
+  when: cloud1_enable_firewall | bool
+
+- name: Deny incoming traffic by default
+  community.general.ufw:
+    direction: incoming
+    policy: deny
+  when: cloud1_enable_firewall | bool
+
+- name: Enable firewall
+  community.general.ufw:
+    state: enabled
+  when: cloud1_enable_firewall | bool
+
+- name: Enable and start Docker
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: true
+

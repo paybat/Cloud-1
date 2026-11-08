@@ -1,0 +1,57 @@
+---
+- name: Create remote application directory
+  ansible.builtin.file:
+    path: '{{ cloud1_app_dir }}'
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Copy Compose file
+  ansible.builtin.copy:
+    src: '{{ playbook_dir }}/files/Inception/srcs/docker-compose.yml'
+    dest: '{{ cloud1_app_dir }}/docker-compose.yml'
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Copy service build contexts
+  ansible.builtin.copy:
+    src: '{{ playbook_dir }}/files/Inception/srcs/requirements/'
+    dest: '{{ cloud1_app_dir }}/requirements/'
+    owner: root
+    group: root
+    mode: preserve
+
+- name: Create TLS certificate directory
+  ansible.builtin.file:
+    path: '{{ cloud1_app_dir }}/tls'
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+
+- name: Render protected runtime environment file
+  ansible.builtin.template:
+    src: '{{ playbook_dir }}/templates/inception.env.j2'
+    dest: '{{ cloud1_app_dir }}/.env'
+    owner: root
+    group: root
+    mode: '0600'
+  no_log: true
+
+- name: Ensure persistent WordPress data directory exists
+  ansible.builtin.file:
+    path: '{{ cloud1_wordpress_data_dir }}'
+    state: directory
+
+- name: Ensure MariaDB data directory exists
+  ansible.builtin.file:
+    path: '{{ cloud1_mariadb_data_dir }}'
+    state: directory
+
+- name: Build and start application services
+  community.docker.docker_compose_v2:
+    project_src: '{{ cloud1_app_dir }}'
+    state: present
+    build: policy

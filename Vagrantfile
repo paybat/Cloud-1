@@ -1,4 +1,5 @@
 Vagrant.configure("2") do |config|
+  
   config.vm.box = "ubuntu/jammy64"
   config.vm.hostname = "cloud1"
   config.vm.network "private_network", ip: "192.168.56.20"

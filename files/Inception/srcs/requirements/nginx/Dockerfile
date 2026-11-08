@@ -1,20 +1,12 @@
 FROM debian:bookworm
 
-RUN apt-get update && apt upgrade -y && apt-get install -y nginx openssl
+RUN apt-get update && apt-get install -y --no-install-recommends nginx openssl gettext-base \
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /etc/nginx/ssl /etc/nginx/templates /var/www/wordpress \
+    && rm -f /etc/nginx/sites-enabled/default
 
-RUN mkdir -p /etc/nginx/ssl
-RUN mkdir -p /var/www/wordpress
+COPY ./tools/nginx.conf.template /etc/nginx/templates/default.conf.template
+COPY ./tools/nginx-entrypoint.sh /usr/local/bin/nginx-entrypoint
+RUN chmod 0755 /usr/local/bin/nginx-entrypoint
 
-
-
-RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-	-keyout /etc/nginx/ssl/inception.key \
-	-out /etc/nginx/ssl/inception.crt \
-	-subj "/C=MO/ST=KH/L=KH/O=SELF/OU=Dev/CN=hidriouc.42.fr"
-
-RUN rm -f /etc/nginx/sites-enabled/default
-
-COPY ./tools/nginx.conf  /etc/nginx/conf.d/default.conf
-
-
-ENTRYPOINT ["nginx", "-g", "daemon off;"]
+ENTRYPOINT ["/usr/local/bin/nginx-entrypoint"]

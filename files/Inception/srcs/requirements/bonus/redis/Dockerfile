@@ -1,12 +1,5 @@
-FROM debian:bookworm
+FROM redis:7-alpine
 
-RUN apt-get update && apt-get upgrade -y && \
-	apt-get install redis -y
+EXPOSE 6379
 
-COPY tools/redisConf.sh redisConf.sh
-
-RUN chmod +x redisConf.sh
-
-
-ENTRYPOINT ["./redisConf.sh"]
-
+CMD ["redis-server", "--appendonly", "yes"]

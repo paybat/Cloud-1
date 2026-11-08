@@ -1,38 +1,50 @@
-Role Name
-=========
+# Cloud-1: automated Inception deployment
 
-A brief description of the role goes here.
+This repository deploys WordPress, MariaDB, Redis, phpMyAdmin, and Nginx as separate Docker Compose services on Ubuntu 22.04 or a compatible host. Ansible configures the host, restricts inbound traffic, installs Docker, and starts the stack. WordPress and MariaDB data live in persistent directories under `/var/lib/cloud-1`.
 
-Requirements
-------------
+## Requirements
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+- Ansible on the control machine
+- SSH access as `root` to each target host (the assignment requires root login)
+- Ubuntu 22.04 LTS or a compatible Ubuntu host with SSH and Python 3
+- DNS for the configured domain pointing to the target, when using a public host
 
-Role Variables
---------------
+Install the required Ansible collections:
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+```sh
+ansible-galaxy collection install -r requirements.yml
+```
 
-Dependencies
-------------
+The database and WordPress credentials are stored in `vars/vault.yml`. Supply the vault password using Ansible Vault's normal password-file or prompt options. Do not commit the vault password.
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+## Configure targets
 
-Example Playbook
-----------------
+Edit `defaults/inventory.ini` with one or more target hosts. Example:
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
+```ini
+[cloud]
+web1 ansible_host=203.0.113.10 ansible_user=root ansible_python_interpreter=/usr/bin/python3
+web2 ansible_host=203.0.113.11 ansible_user=root ansible_python_interpreter=/usr/bin/python3
+```
 
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
+Set `cloud1_domain_name` in `defaults/main.yml` to the DNS name for the deployment. Set `cloud1_enable_firewall: true` to allow only SSH (22), HTTP (80), and HTTPS (443) inbound through UFW. Configure the cloud provider's network firewall/security group to allow the same ports; host firewall rules cannot override provider-level network policy.
 
-License
--------
+The included inventory currently describes the local Vagrant development VM. Replace it with the remote inventory above for a cloud deployment. Ansible deploys to all hosts in the `[cloud]` group in parallel by default.
 
-BSD
+## Deploy
 
-Author Information
-------------------
+```sh
+ansible-playbook -i defaults/inventory.ini site.yml --ask-vault-pass
+```
 
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+For a vault password file, use `--vault-password-file /secure/path/to/vault-pass`. The deployment is designed to be repeatable and will preserve the WordPress and database directories across restarts and Compose updates.
+
+The Nginx container redirects HTTP to HTTPS and generates a domain-specific self-signed certificate if no certificate is supplied. Browsers will warn for that certificate. For a trusted certificate, set both `cloud1_tls_cert_src` and `cloud1_tls_key_src` in `defaults/main.yml` to paths on the Ansible control machine; the playbook copies them into the persistent TLS directory. phpMyAdmin has no public host port and is exposed only through Nginx over HTTPS.
+
+## Services and exposure
+
+Only Nginx publishes host ports 80 and 443. MariaDB, WordPress/PHP-FPM, Redis, and phpMyAdmin communicate over the private Compose network. phpMyAdmin is reachable through the HTTPS path `/phpmyadmin/`. SSH is provided by the host, not Compose. UFW defaults to deny incoming traffic and allows ports 22, 80, and 443.
+
+## Local development
+
+`Vagrantfile` and `defaults/inventory.ini` provide a local Ubuntu Jammy VM. After starting it with Vagrant, run the deploy command above. Set up a local DNS/hosts entry for the configured domain if testing the site by name.

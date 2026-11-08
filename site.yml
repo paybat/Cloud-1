@@ -5,6 +5,6 @@
   vars_files:
     - defaults/main.yml
     - vars/vault.yml
-  tasks:
-    - name: Run the Cloud-1 task list
-      ansible.builtin.import_tasks: tasks/main.yml
+  roles:
+    - cloud1_base
+    - cloud1_app

@@ -4,6 +4,7 @@ services:
   nginx:
     container_name: nginx
     image: nginx:hidriouc
+    pull_policy: never
     build:
       context: ./requirements/nginx
       dockerfile: Dockerfile
@@ -12,6 +13,7 @@ services:
       - "443:443"
     volumes:
       - wordpress:/var/www/wordpress
+      - ./tls:/etc/nginx/ssl
     networks:
       - inception
     restart: always
@@ -23,6 +25,7 @@ services:
 
   mariadb:
     image: mariadb:hidriouc
+    pull_policy: never
     build:
       context: ./requirements/mariadb
       dockerfile: Dockerfile
@@ -44,6 +47,7 @@ services:
   wordpress:
     container_name: wordpress
     image: wordpress:hidriouc
+    pull_policy: never
     build:
       context: ./requirements/wordpress
       dockerfile: Dockerfile
@@ -62,57 +66,26 @@ services:
     container_name: redis
     build: requirements/bonus/redis
     image: redis:hidriouc
+    pull_policy: never
     env_file: .env
-    volumes:
-      - wordpress:/var/www/wordpress
     networks:
       - inception
     restart: always
 
-  # ftp:
-  #   container_name: ftp
-  #   build: requirements/bonus/ftp
-  #   image: ftp:hidriouc
-  #   env_file: .env
-  #   # ports:
-  #   #   - "21:21"
-  #   #   - "30000-30100:30000-30100"
-  #   volumes:
-  #     - wordpress:/data/uploads
-  #   networks:
-  #     - inception
-  #   restart: always
-
-  # adminer:
-  #   container_name: adminer
-  #   image: adminer:hidriouc
-  #   build: requirements/bonus/adminer
-  #   networks:
-  #     - inception
-  #   # ports:
-  #   #   - "9090:9090"
-  #   restart: always
-
-  # mailhog:
-  #   container_name: mailhog
-  #   image: mailhog:hidriouc
-  #   build: requirements/bonus/mailhog
-  #   # ports:
-  #   #   - "1025:1025"
-  #   #   - "8025:8025"
-  #   networks:
-  #     - inception
-  #   restart: always
-
-  # static:
-  #   container_name: static
-  #   image: static:hidriouc
-  #   build: requirements/bonus/static
-  #   # ports:
-  #   #   - "8080:8080"
-  #   networks:
-  #     - inception
-  #   restart: always
+  phpmyadmin:
+    image: phpmyadmin:5-apache
+    container_name: phpmyadmin
+    environment:
+      PMA_HOST: mariadb
+      PMA_PORT: 3306
+      PMA_ABSOLUTE_URI: https://${DOMAINNAME}/phpmyadmin/
+      UPLOAD_LIMIT: 64M
+    networks:
+      - inception
+    restart: always
+    depends_on:
+      mariadb:
+        condition: service_healthy
 
 volumes:
   wordpress:
