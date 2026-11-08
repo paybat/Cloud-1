@@ -1,0 +1,8 @@
+---
+- name: Configure Cloud-1 hosts
+  hosts: cloud
+  become: true
+  roles:
+    - common
+    - docker
+    - firewall

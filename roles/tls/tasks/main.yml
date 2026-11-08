@@ -1,0 +1,13 @@
+---
+- name: Install trusted TLS files
+  ansible.builtin.copy:
+    src: '{{ item.src }}'
+    dest: '{{ cloud1_app_dir }}/tls/{{ item.name }}'
+    owner: root
+    group: root
+    mode: '{{ item.mode }}'
+  loop:
+    - { src: '{{ cloud1_tls_cert_src }}', name: inception.crt, mode: '0644' }
+    - { src: '{{ cloud1_tls_key_src }}', name: inception.key, mode: '0600' }
+  when: cloud1_tls_cert_src is defined
+  notify: Restart Nginx

@@ -1,5 +1,18 @@
-files/Inception/srcs/.env
+# Vagrant state and generated VM files
 .vagrant/
-**/.env
-**/tls/*.key
+
+# Local environment and secret files
+.env
 .vault-pass
+.vault-pass.*
+vault-password*
+*.key
+*.pem
+
+# Ansible output
+*.retry
+
+# Python and OS generated files
+__pycache__/
+*.py[cod]
+.DS_Store

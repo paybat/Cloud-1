@@ -1,0 +1,6 @@
+---
+- name: Verify Cloud-1 deployment
+  hosts: cloud
+  become: true
+  roles:
+    - verification

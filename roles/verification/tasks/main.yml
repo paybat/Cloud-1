@@ -1,0 +1,18 @@
+---
+- name: List running Compose services
+  ansible.builtin.command:
+    cmd: docker compose ps --status running --services
+    chdir: '{{ cloud1_app_dir }}'
+  register: cloud1_running_services
+  changed_when: false
+
+- name: Confirm all Compose services are running
+  ansible.builtin.assert:
+    that:
+      - "'nginx' in cloud1_running_services.stdout_lines"
+      - "'mariadb' in cloud1_running_services.stdout_lines"
+      - "'wordpress' in cloud1_running_services.stdout_lines"
+      - "'redis' in cloud1_running_services.stdout_lines"
+      - "'phpmyadmin' in cloud1_running_services.stdout_lines"
+    fail_msg: 'One or more Cloud-1 services are not running.'
+    success_msg: 'All Cloud-1 services are running.'

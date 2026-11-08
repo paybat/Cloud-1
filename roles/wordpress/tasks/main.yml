@@ -7,9 +7,15 @@
     group: root
     mode: '0755'
 
-- name: Copy Compose file
-  ansible.builtin.copy:
-    src: '{{ playbook_dir }}/files/Inception/srcs/docker-compose.yml'
+- name: Ensure TLS certificate and key are configured together
+  ansible.builtin.assert:
+    that:
+      - (cloud1_tls_cert_src is defined) == (cloud1_tls_key_src is defined)
+    fail_msg: 'Set both cloud1_tls_cert_src and cloud1_tls_key_src, or leave both unset.'
+
+- name: Render Compose file
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
     dest: '{{ cloud1_app_dir }}/docker-compose.yml'
     owner: root
     group: root
@@ -17,7 +23,7 @@
 
 - name: Copy service build contexts
   ansible.builtin.copy:
-    src: '{{ playbook_dir }}/files/Inception/srcs/requirements/'
+    src: '{{ playbook_dir }}/../files/Inception/srcs/requirements/'
     dest: '{{ cloud1_app_dir }}/requirements/'
     owner: root
     group: root
@@ -33,22 +39,23 @@
 
 - name: Render protected runtime environment file
   ansible.builtin.template:
-    src: '{{ playbook_dir }}/templates/inception.env.j2'
+    src: inception.env.j2
     dest: '{{ cloud1_app_dir }}/.env'
     owner: root
     group: root
     mode: '0600'
   no_log: true
 
-- name: Ensure persistent WordPress data directory exists
+- name: Ensure persistent data directories exist
   ansible.builtin.file:
-    path: '{{ cloud1_wordpress_data_dir }}'
+    path: '{{ item }}'
     state: directory
-
-- name: Ensure MariaDB data directory exists
-  ansible.builtin.file:
-    path: '{{ cloud1_mariadb_data_dir }}'
-    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - '{{ cloud1_wordpress_data_dir }}'
+    - '{{ cloud1_mariadb_data_dir }}'
 
 - name: Build and start application services
   community.docker.docker_compose_v2:

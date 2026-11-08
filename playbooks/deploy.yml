@@ -1,0 +1,11 @@
+---
+- import_playbook: configure.yml
+
+- name: Deploy Cloud-1 application
+  hosts: cloud
+  become: true
+  vars_files:
+    - ../secrets/vault.yml
+  roles:
+    - wordpress
+    - tls
